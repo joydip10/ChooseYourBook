@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Search</title>
+    <!-- Bootstrap CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+</head>
+
+<body class="bg-gray container">
+    <h2 class="text-center text-success">Search Your Book</h2>
+    <!-- searchBook -->
+    <div class="input-group mb-3 w-50 mx-auto">
+        <input type="text" class="form-control" placeholder="Search the Book you want" aria-label="Recipient's username"
+            aria-describedby="button-addon2" id="input-search">
+        <button class="btn btn-outline-secondary" type="button" id="button-search"
+            onclick="searchBook()">Search</button>
+    </div>
+
+    <!-- Spinners -->
+    <div class="spinner-border text-primary mx-auto" style="display:none" id="spinner" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+
+    <!-- Number of Books -->
+    <p id="numberOfBooks" class="text-center text-success">
+
+    </p>
+
+
+    <!-- error-message -->
+    <div id="error-message" style="display:none">
+        <p class="text-danger text-center fw-bolder fs-4">
+            Something is Wrong.No result found.Please try again later or wait for sometimes.
+        </p>
+    </div>
+    <!-- Grid-cards  -->
+    <div id="search-results" class="row row-cols-1 row-cols-md-4 g-4">
+
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"
+        integrity="sha384-eMNCOe7tC1doHpGoWe/6oMVemdAVTMs2xqW4mwXrXsW0L84Iytr2wi5v2QjrP/xp"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.min.js"
+        integrity="sha384-cn7l7gDp0eyniUwwAZgrzD06kc/tftFf19TOAs2zVinnD/C7E91j9yyk5//jjpt/"
+        crossorigin="anonymous"></script>
+
+    <!-- Our JS -->
+
+    <script>
+        const searchBook = () => {
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.style.display = 'none';
+
+            const searchResults = document.getElementById('search-results');
+            searchResults.textContent = "";
+            
+            const numberOfBooks = document.getElementById('numberOfBooks');
+            numberOfBooks.textContent = "";
+
+            const spinner = document.getElementById('spinner');
+            spinner.style.display = "block";
+
+            const inputSearch = document.getElementById('input-search');
+            const inputValue = inputSearch.value;
+            if (inputValue !== "") {
+                const url = `https://openlibrary.org/search.json?q=${inputValue}`;
+                try {
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => displayResults(data))
+                } catch (error) {
+                    displayError();
+                }
+            } else {
+                spinner.style.display = "none";
+                const searchResults = document.getElementById('search-results');
+                searchResults.innerHTML = `<h1 class="text-center fs-4 text-danger w-100">Nothing is Searched</h1>`;
+            }
+            inputSearch.value = '';
+        }
+
+        function displayImage(id) {
+            url = ` https://covers.openlibrary.org/b/id/${id}-M.jpg`;
+            return url;
+        }
+
+        const displayResults = data => {
+            const books=data.docs;
+            if (books.length == 0) {
+                displayError();
+            }
+            else {
+                const spinner = document.getElementById('spinner');
+                spinner.style.display = "none";
+
+                const searchResults = document.getElementById('search-results');
+                searchResults.textContent = "";
+
+                const numberOfBooks = document.getElementById('numberOfBooks');
+                numberOfBooks.textContent = "";
+
+                const num=(30 / 100) * (books.length);
+                const numberOfBookShowed = Math.floor(num);
+                console.log(numberOfBookShowed);
+                const totalNumberOfBooks = data.numFound;
+                numberOfBooks.innerText = `${numberOfBookShowed} results are shown out of ${totalNumberOfBooks} results`;
+
+                const booksTObeShowed = books.slice(0, numberOfBookShowed);
+                booksTObeShowed.forEach(book => {
+                    let title = "";
+                    if (book.title !== undefined) {
+                        title = book.title;
+                    }
+                    else {
+                        title = "unknown";
+                    }
+
+                    let authors = "";
+                    if (book.author_name !== undefined) {
+                        authors = book.author_name.join(',');
+                    }
+                    else {
+                        authors = "unknown";
+                    }
+
+                    let publisher = "";
+                    if (book.publisher !== undefined) {
+                        publisher = book.publisher[0];
+                    }
+                    else {
+                        publisher = "unknown";
+                    }
+
+                    let firstPublished = book.first_publish_year;
+                    if (book.first_publish_year !== undefined) {
+                        firstPublished = book.first_publish_year;
+                    }
+                    else {
+                        firstPublished = "unknown";
+                    }
+
+                    let cover_i = "" + book.cover_i;
+                    let image = displayImage(cover_i);
+
+                    const div = document.createElement('div');
+                    div.classList.add = "col";
+                    div.innerHTML = `<div class="card h-100">
+             <img src=${image} class="card-img-top img-fluid" alt="No Image Found">
+             <div class="card-body">
+               <h3 class="card-title text-danger">${title}</h3>
+               <h5 class="card-text text-success"><span class="text-info">Authors:</span> ${authors}</h5>
+               <h5 class="card-text text-success"><span class="text-info">Publisher:</span> ${publisher}</h5>
+               <h5 class="card-text text-success"><span class="text-info">First Published:</span> ${firstPublished}</h5>
+             </div>
+           </div>`
+                    searchResults.appendChild(div);
+                });
+            }
+
+
+
+        }
+        const displayError = () => {
+            const spinner = document.getElementById('spinner');
+            spinner.style.display = "none";
+            const errorMessage = document.getElementById('error-message');
+            errorMessage.style.display = 'block';
+        }
+
+
+    </script>
+</body>
+
+</html>
